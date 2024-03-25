@@ -893,7 +893,7 @@ color: #333333;
          <string notr="true">background-color:#6EC6FF;</string>
         </property>
         <property name="text">
-         <string>Generate Barcode</string>
+         <string>Scan Barcode</string>
         </property>
        </widget>
       </item>
