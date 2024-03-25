@@ -207,8 +207,7 @@ class User_Mngmnt(QMainWindow):
             
         db.close()
 
-        self.searchedModel = QStandardItemModel(0,5)
-        self.searchedModel.setHorizontalHeaderLabels(['Username','Password','Permissions','',''])
+        self.model.removeRows(0, self.model.rowCount())
 
 
         for items in found:
@@ -219,10 +218,10 @@ class User_Mngmnt(QMainWindow):
                 QStandardItem("Edit"),
                 QStandardItem("Delete"),
             ]
-            self.searchedModel.appendRow(Searched_item)
+            self.model.appendRow(Searched_item)
 
-        self.view.setModel(self.searchedModel)
-        #self.main_table.selectionModel().selectionChanged.connect(self.tableItemClicked)
+        self.view.setModel(self.model)
+        self.main_table.selectionModel().selectionChanged.connect(self.tableItemClicked)
 
 
 
