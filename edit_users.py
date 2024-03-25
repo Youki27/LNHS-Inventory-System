@@ -53,7 +53,6 @@ class EditUsers(QMainWindow):
                 self.barcode_checkbox.setChecked(True)
 
     def saveEdit(self):
-        print('Verification in Progress', self.uname)
 
         if not self.verifyUsername():
             return
