@@ -20,10 +20,13 @@ class Item_Mngmnt(QMainWindow):
         self.refresh_button = self.findChild(QPushButton, "refresh_button")
         self.main_table = self.findChild(QTableView, "main_table")
         self.main_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+        self.search_bar = self.findChild(QLineEdit, "search_bar")
+        self.search_button = self.findChild(QPushButton, "search_button")
 
         self.return_button.clicked.connect(self.close)
         self.add_items_button.clicked.connect(self.addItem)
         self.refresh_button.clicked.connect(self.loadItems)
+        self.search_button.clicked.connect(self.loadSearchedItem)
 
         self.loadItems()
 
@@ -180,7 +183,46 @@ class Item_Mngmnt(QMainWindow):
 
             PrintBarcode.printCode(self,filepath)
             
+    def loadSearchedItem(self):
+        db = Database()
 
+        connection = db.connect()
+        cursor = connection.cursor()
+
+        tbsearched = self.search_bar.text()
+
+        try:
+            cursor.execute(f"SELECT * FROM lnhsis.items WHERE item_name LIKE '%{tbsearched}%' OR quality LIKE '%{tbsearched}%' OR barcode LIKE '%{tbsearched}%' OR status LIKE '%{tbsearched}%'")
+        except mysql.connector.Error as err:
+            print("Error:", err)
+            connection.rollback()
+
+        results = cursor.fetchall()
+            
+        db.close()
+
+        self.model.removeRows(0, self.model.rowCount())
+
+
+        for row in results:
+            stat = 'Available'
+            if row[5]:
+                stat = 'Borrowed'
+
+            items = [
+                QStandardItem(row[1]),
+                QStandardItem(row[2]),
+                QStandardItem(row[3]),
+                QStandardItem(str(row[4])),
+                QStandardItem(stat),
+                QStandardItem(""),
+            ]
+            items.append(QStandardItem("Edit"))
+            items.append(QStandardItem("Delete"))
+            items.append(QStandardItem("Print"))
+            self.model.appendRow(items)
+
+        self.view.setModel(self.model)
 
 if __name__ == "__main__":
     app = QApplication([])
