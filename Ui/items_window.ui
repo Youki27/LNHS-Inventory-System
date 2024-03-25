@@ -120,7 +120,7 @@ color:#333333;</string>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="pushButton_2">
+       <widget class="QPushButton" name="search_button">
         <property name="styleSheet">
          <string notr="true">background-color:white;
 color:#333333;</string>
