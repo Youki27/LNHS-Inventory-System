@@ -69,7 +69,7 @@ class AddItem(QMainWindow):
             Code128 = barcode.get_barcode_class('code128')
             code128 = Code128(self.unique_code, writer = ImageWriter())
 
-            filepath = f'Barcodes/{self.item_name.text()}'
+            filepath = f'Barcodes/{self.item_name.text()}_{self.barcode.text()}'
 
             code128.save(filepath, options={'write_text' : False})
 
