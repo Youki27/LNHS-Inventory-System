@@ -2,6 +2,7 @@ from PyQt6.QtWidgets import QPushButton, QApplication,QMainWindow
 from PyQt6 import uic
 from user_management_window import User_Mngmnt
 from item_management_window import Item_Mngmnt
+from scan_barcode import Scanbarcode
 from PyQt6.QtCore import pyqtSignal
 
 class Main_menu(QMainWindow):
@@ -22,11 +23,14 @@ class Main_menu(QMainWindow):
         self.users_button.clicked.connect(self.manage_users)
         self.items_button.clicked.connect(self.manage_items)
         self.logout_button.clicked.connect(self.logout)
+        self.barcode_button.clicked.connect(self.scan_barcode)
 
         self.usr_mng_window = User_Mngmnt()
         self.usr_mng_window.return_.connect(self.show)
         self.itm_mng_window = Item_Mngmnt()
         self.itm_mng_window.return_.connect(self.show)
+        self.scan_window = Scanbarcode()
+        self.scan_window.return_.connect(self.show)
 
     def closeEvent(self, event):
         self.closed_to_login.emit()
@@ -38,6 +42,10 @@ class Main_menu(QMainWindow):
 
     def manage_items(self):
         self.itm_mng_window.show()
+        self.hide()
+
+    def scan_barcode(self):
+        self.scan_window.show()
         self.hide()
 
     def logout(self):
