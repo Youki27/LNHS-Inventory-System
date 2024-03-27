@@ -190,9 +190,18 @@ class Item_Mngmnt(QMainWindow):
         cursor = connection.cursor()
 
         tbsearched = self.search_bar.text()
+        status = 0
+        if tbsearched.lower() == 'available':
+            status = 0
+            print(tbsearched)
+        elif tbsearched.lower() == 'borrowed':
+            status = 1
+            print(tbsearched)
+        else:
+            status = 2
 
         try:
-            cursor.execute(f"SELECT * FROM lnhsis.items WHERE item_name LIKE '%{tbsearched}%' OR quality LIKE '%{tbsearched}%' OR barcode LIKE '%{tbsearched}%' OR status LIKE '%{tbsearched}%'")
+            cursor.execute(f"SELECT * FROM lnhsis.items WHERE item_name LIKE '%{tbsearched}%' OR quality LIKE '%{tbsearched}%' OR barcode LIKE '%{tbsearched}%' OR status = {status}")
         except mysql.connector.Error as err:
             print("Error:", err)
             connection.rollback()
