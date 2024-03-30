@@ -58,8 +58,19 @@ class Item_Mngmnt(QMainWindow):
         items = []
         for row in results:
             stat = 'Available'
+            name = ''
             if row[4]:
                 stat = 'Borrowed'
+                connection = db.connect()
+                cursor = connection.cursor()
+                try:
+                    cursor.execute(f"SELECT borrower_name FROM lnhsis.borrowers WHERE barcode = '{row[2]}'")
+                except mysql.connector.Error as err:
+                    print("Error: ", err)
+
+                borrower = cursor.fetchone()
+                connection.close()
+                name = borrower[0]
 
             items = [
                 QStandardItem(row[0]),
@@ -67,7 +78,7 @@ class Item_Mngmnt(QMainWindow):
                 QStandardItem(row[2]),
                 QStandardItem(str(row[3])),
                 QStandardItem(stat),
-                QStandardItem("")
+                QStandardItem(name)
             ]
             items.append(QStandardItem("Edit"))
             items.append(QStandardItem("Delete"))
@@ -193,10 +204,8 @@ class Item_Mngmnt(QMainWindow):
         status = 0
         if tbsearched.lower() == 'available':
             status = 0
-            print(tbsearched)
         elif tbsearched.lower() == 'borrowed':
             status = 1
-            print(tbsearched)
         else:
             status = 2
 
@@ -215,8 +224,20 @@ class Item_Mngmnt(QMainWindow):
 
         for row in results:
             stat = 'Available'
+            name = ''
             if row[5]:
                 stat = 'Borrowed'
+                
+                connection = db.connect()
+                cursor = connection.cursor()
+                try:
+                    cursor.execute(f"SELECT borrower_name FROM lnhsis.borrowers WHERE barcode = '{row[3]}'")
+                except mysql.connector.Error as err:
+                    print("Error: ", err)
+
+                borrower = cursor.fetchone()
+                connection.close()
+                name = borrower[0]
 
             items = [
                 QStandardItem(row[1]),
@@ -224,7 +245,7 @@ class Item_Mngmnt(QMainWindow):
                 QStandardItem(row[3]),
                 QStandardItem(str(row[4])),
                 QStandardItem(stat),
-                QStandardItem(""),
+                QStandardItem(name),
             ]
             items.append(QStandardItem("Edit"))
             items.append(QStandardItem("Delete"))
