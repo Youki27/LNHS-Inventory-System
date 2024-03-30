@@ -68,7 +68,7 @@ class BorrowerInfo(QMainWindow):
         connection = db.connect()
         cursor = connection.cursor()
         try:
-            cursor.execute(f"INSERT INTO lnhsis.borrowers (borrower_name, borrower_address, borrowed_item, barcode, purpose, date_borrowed, date_return) VALUES ('{self.borrower.text()}','{self.address.text()}', '{self.item_name.text()}', '{self.barcode.text()}', '{self.purpose.toPlainText()}', '{self.date_borrowed.text()}', '{self.date_to_return.text()}');")
+            cursor.execute(f"INSERT INTO lnhsis.borrowers (borrower_name, borrower_address, borrowed_item, barcode, purpose, date_borrowed, date_return_estimate) VALUES ('{self.borrower.text()}','{self.address.text()}', '{self.item_name.text()}', '{self.barcode.text()}', '{self.purpose.toPlainText()}', '{self.date_borrowed.text()}', '{self.date_to_return.text()}');")
         except mysql.connector.Error as err:
             print("Error: ", err)
 

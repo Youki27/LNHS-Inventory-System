@@ -96,6 +96,9 @@ class User_Mngmnt(QMainWindow):
         for index in item.indexes():
             selected_item = index
 
+        if isinstance(selected_item, str):
+            return
+
         selected_item_data = selected_item.data()
 
         username_index = self.model.index(selected_item.row(),0)

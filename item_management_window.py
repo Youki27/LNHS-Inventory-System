@@ -64,7 +64,7 @@ class Item_Mngmnt(QMainWindow):
                 connection = db.connect()
                 cursor = connection.cursor()
                 try:
-                    cursor.execute(f"SELECT borrower_name FROM lnhsis.borrowers WHERE barcode = '{row[2]}'")
+                    cursor.execute(f"SELECT borrower_name FROM lnhsis.borrowers WHERE barcode = '{row[2]}' AND date_returned IS NULL")
                 except mysql.connector.Error as err:
                     print("Error: ", err)
 
@@ -103,6 +103,9 @@ class Item_Mngmnt(QMainWindow):
 
         for index in item.indexes():
             selected_item = index
+        
+        if isinstance(selected_item, str):
+            return
 
         selected_item_data = selected_item.data()
 
@@ -231,7 +234,7 @@ class Item_Mngmnt(QMainWindow):
                 connection = db.connect()
                 cursor = connection.cursor()
                 try:
-                    cursor.execute(f"SELECT borrower_name FROM lnhsis.borrowers WHERE barcode = '{row[3]}'")
+                    cursor.execute(f"SELECT borrower_name FROM lnhsis.borrowers WHERE barcode = '{row[3]}' AND date_returned IS NULL")
                 except mysql.connector.Error as err:
                     print("Error: ", err)
 

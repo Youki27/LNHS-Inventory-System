@@ -137,7 +137,7 @@
      <item row="5" column="0">
       <widget class="QLabel" name="label_7">
        <property name="text">
-        <string>Date to be Returned:</string>
+        <string>Estimated Return:</string>
        </property>
       </widget>
      </item>

@@ -2,7 +2,7 @@ from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtWidgets import QApplication, QMainWindow, QLineEdit, QVBoxLayout, QSizePolicy
 from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6 import uic
-import mysql.connector
+import mysql.connector, datetime
 from warning_dialog import Warning
 # Assuming database.py and its Database class are correctly implemented
 from database import Database
@@ -46,14 +46,39 @@ class Scanbarcode(QMainWindow):
         cursor = connection.cursor()
 
         try:
-            cursor.execute("SELECT * FROM lnhsis.items WHERE barcode = %s", (self.barcode_box.text(),))
+            cursor.execute("SELECT status,item_id FROM lnhsis.items WHERE barcode = %s", (self.barcode_box.text(),))
         except mysql.connector.Error as err:
             print("Error:", err)
 
-        results = cursor.fetchall()
+        results = cursor.fetchone()
         db.close()
 
         if results:
+
+            if results[0]:
+                connection = db.connect()
+                cursor = connection.cursor()
+                try:
+                    cursor.execute(f"UPDATE lnhsis.items SET status = 0 WHERE item_id = {results[1]};")
+                    connection.commit()
+                    cursor.execute(f"SELECT bid FROM lnhsis.borrowers WHERE barcode = '{self.barcode_box.text()}' AND date_returned IS NULL;")
+                except mysql.connector.Error as err:
+                    print("Error: ", err)
+
+                bid = cursor.fetchone()
+
+                current_datetime = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S')
+                try:
+                    cursor.execute(f"UPDATE lnhsis.borrowers SET date_returned = '{current_datetime}' WHERE bid = {bid[0]};")
+                    connection.commit()
+                except mysql.connector.Error as err:
+                    print("Error 2:", err)
+                db.close()
+
+                self.warning.setWarning("Item Returned!")
+                self.warning.show()
+                self.barcode_box.setText('')
+                return
             from input_borrower import BorrowerInfo
             self.borrower_info_window = BorrowerInfo()
             self.borrower_info_window.addBorrowerInfo(self.barcode_box.text())
