@@ -14,6 +14,19 @@ class AddItem(QMainWindow):
 
         uic.loadUi("Ui/add_item_window.ui", self)
 
+        db = Database()
+
+        connection = db.connect()
+        cursor = connection.cursor()
+
+        try:
+            cursor.execute("SELECT user FROM lnhsis.logs ORDER BY log_date LIMIT 1")
+        except mysql.connector.Error as err:
+            print("Error:", err)
+
+        self.current_user = cursor.fetchone()
+        db.close()
+
         self.barcode = self.findChild(QLineEdit, "barcode")
         self.item_name = self.findChild(QLineEdit, "item_name")
         self.quality = self.findChild(QComboBox, "quality_box")
@@ -46,6 +59,12 @@ class AddItem(QMainWindow):
             cursor.execute(f"INSERT INTO lnhsis.items (item_name, quality, barcode, date_added, status) VALUES ('{self.item_name.text()}', '{self.quality.currentText()}', '{self.barcode.text()}', '{self.datetime.text()}', 0)")
         except mysql.connector.Error as err:
             print("Error: ", err)
+
+        try:
+            action = f"Added the item {self.item_name.text()}"
+            cursor.execute(f"INSERT INTO lnhsis.logs (user, action, log_date) VALUES ('{self.current_user[0]}', '{action}', '{self.datetime.text()}')")
+        except mysql.connector.Error as err:
+            print("Error:", err)
         connection.commit()
         db.close()
         
@@ -54,14 +73,16 @@ class AddItem(QMainWindow):
         confirmation = self.warning.exec()
 
         if confirmation == QDialog.DialogCode.Accepted:
+            connection = db.connect()
+            cursor = connection.cursor()
 
-            #from barcode import Code128
-
-            #data = self.unique_code
-
-            #my_code = Code128(data)
-
-            #my_code.save(f"Barcodes/{self.item_name.text()}")
+            try:
+                action = f"Printed the barcode for {self.item_name.text()}"
+                cursor.execute(f"INSERT INTO lnhsis.logs (user, action, log_date) VALUES ('{self.current_user[0]}', '{action}', '{self.datetime.text()}')")
+            except mysql.connector.Error as err:
+                print("Error:", err)
+            connection.commit()
+            db.close()
 
             import barcode
             from barcode.writer import ImageWriter

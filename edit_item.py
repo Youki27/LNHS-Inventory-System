@@ -12,6 +12,19 @@ class EditItems(QMainWindow):
 
         uic.loadUi("Ui/add_item_window.ui", self)
 
+        db = Database()
+
+        connection = db.connect()
+        cursor = connection.cursor()
+
+        try:
+            cursor.execute("SELECT user FROM lnhsis.logs ORDER BY log_date LIMIT 1")
+        except mysql.connector.Error as err:
+            print("Error:", err)
+
+        self.current_user = cursor.fetchone()
+        db.close()
+
         self.warning = Warning()
 
         self.barcode = self.findChild(QLineEdit, "barcode")
@@ -68,6 +81,15 @@ class EditItems(QMainWindow):
                 print("Error:", err)
 
             connection.commit()
+
+        try:
+            action = f"Edited the item {self.item}"
+            cursor.execute(f"INSERT INTO lnhsis.logs (user, action, log_date) VALUES ('{self.current_user[0]}', '{action}', '{self.datetime.text()}')")
+        except mysql.connector.Error as err:
+            print("Error:", err)
+        connection.commit()
+        db.close()
+
 
         db.close()
         self.close()

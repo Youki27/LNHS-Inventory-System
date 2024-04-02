@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QMainWindow, QApplication, QLabel, QLineEdit, QFrame, QPushButton, QDialog
 from PyQt6 import uic
-import sys
+import mysql.connector, datetime
 from menu_window import Main_menu
 from user_management_window import User_Mngmnt
 from UNPW_pop import Ui_incUNPW_warning
@@ -27,13 +27,24 @@ class Login_Window(QMainWindow):
     def login(self):
         db = Database()
 
-        db.connect()
+        connection = db.connect()
+        cursor = connection.cursor()
         
         given_cred = [self.username_input.text(), self.pass_input.text()]
 
         if db.verify_login(given_cred):
-            db.close()
+
+            action = "Logged in"
+            current_datetime = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S')
             
+            try:
+                cursor.execute(f"INSERT INTO lnhsis.logs (user, action, log_date) VALUES ('{given_cred[0]}', '{action}', '{current_datetime}' )")
+            except mysql.connector.Error as err:
+                print("Error: ", err)
+            connection.commit()
+            
+            db.close()
+
             self.username_input.setText("")
             self.pass_input.setText("")
             self.main_menu_window.show()

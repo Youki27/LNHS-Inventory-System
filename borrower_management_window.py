@@ -4,53 +4,35 @@ from PyQt6 import uic
 from PyQt6.QtCore import pyqtSignal, QModelIndex
 from add_item import AddItem
 from database import Database
-import mysql.connector, datetime
+import mysql.connector
 
-class Item_Mngmnt(QMainWindow):
+class Borrower_Mngmnt(QMainWindow):
 
     return_ = pyqtSignal()
 
     def __init__(self):
-        super(Item_Mngmnt, self).__init__()
+        super(Borrower_Mngmnt, self).__init__()
 
         uic.loadUi("Ui/items_window.ui", self)
-
-        db = Database()
-
-        connection = db.connect()
-        cursor = connection.cursor()
-
-        try:
-            cursor.execute("SELECT user FROM lnhsis.logs ORDER BY log_date LIMIT 1")
-        except mysql.connector.Error as err:
-            print("Error:", err)
-
-        self.current_user = cursor.fetchone()
-        db.close()
 
         self.return_button = self.findChild(QPushButton, "return_button")
         self.add_items_button = self.findChild(QPushButton, "add_items_button")
         self.refresh_button = self.findChild(QPushButton, "refresh_button")
         self.main_table = self.findChild(QTableView, "main_table")
-        self.main_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+        self.main_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.search_bar = self.findChild(QLineEdit, "search_bar")
         self.search_button = self.findChild(QPushButton, "search_button")
 
         self.return_button.clicked.connect(self.close)
-        self.add_items_button.clicked.connect(self.addItem)
+        self.add_items_button.setVisible(False)
         self.refresh_button.clicked.connect(self.loadItems)
         self.search_button.clicked.connect(self.loadSearchedItem)
-        self.datetime = datetime.datetime.now()
 
         self.loadItems()
 
     def closeEvent(self, event):
         self.return_.emit()
         super().closeEvent(event)
-
-    def addItem(self):
-        self.add_item_window = AddItem()
-        self.add_item_window.show()
 
     def loadItems(self):
         db =  Database()
@@ -59,7 +41,7 @@ class Item_Mngmnt(QMainWindow):
         cursor = connection.cursor()
         
         try:
-            cursor.execute(f"SELECT item_name, quality, barcode, date_added, status FROM lnhsis.items")
+            cursor.execute(f"SELECT * FROM lnhsis.borrowers")
         except mysql.connector.Error as err:
             print("Error:", err)
 
@@ -67,50 +49,27 @@ class Item_Mngmnt(QMainWindow):
         connection.close()
         
         self.model = QStandardItemModel(0,6)
-        self.model.setHorizontalHeaderLabels(['Item','Quality','Barcode', 'Date Added','Status','Borrower','','',''])
+        self.model.setHorizontalHeaderLabels(['Name','Address','Item', 'Barcode','Purpose','Date Borrowed','Estimated Return','Returned Date'])
 
         items = []
         for row in results:
-            stat = 'Available'
-            name = ''
-            if row[4]:
-                stat = 'Borrowed'
-                connection = db.connect()
-                cursor = connection.cursor()
-                try:
-                    cursor.execute(f"SELECT borrower_name FROM lnhsis.borrowers WHERE barcode = '{row[2]}' AND date_returned IS NULL")
-                except mysql.connector.Error as err:
-                    print("Error: ", err)
-
-                borrower = cursor.fetchone()
-                connection.close()
-                name = borrower[0]
 
             items = [
-                QStandardItem(row[0]),
                 QStandardItem(row[1]),
                 QStandardItem(row[2]),
-                QStandardItem(str(row[3])),
-                QStandardItem(stat),
-                QStandardItem(name)
+                QStandardItem(row[3]),
+                QStandardItem(row[4]),
+                QStandardItem(row[5]),
+                QStandardItem(str(row[6])),
+                QStandardItem(str(row[7])),
+                QStandardItem(str(row[8]))
             ]
-            items.append(QStandardItem("Edit"))
-            items.append(QStandardItem("Delete"))
-            items.append(QStandardItem("Print"))
             self.model.appendRow(items)
 
         self.view = self.main_table
         self.view.setModel(self.model)
-        self.view.setColumnWidth(0, 150)
-        self.view.setColumnWidth(1, 75)
-        self.view.setColumnWidth(2, 250)
-        self.view.setColumnWidth(3, 150)
-        self.view.setColumnWidth(5, 150)
-        self.view.setColumnWidth(6, 50)
-        self.view.setColumnWidth(7, 50)
-        self.view.setColumnWidth(8, 50)
-        self.main_table.selectionModel().selectionChanged.connect(self.tableItemClicked)
-
+        #self.main_table.selectionModel().selectionChanged.connect(self.tableItemClicked)
+    '''
     def tableItemClicked(self, item:QModelIndex):
 
         selected_item = ""
@@ -179,13 +138,6 @@ class Item_Mngmnt(QMainWindow):
                         connection.rollback()
                     connection.commit()
 
-                try:
-                    action = f"Deleted the item {selected_itemname}"
-                    cursor.execute(f"INSERT INTO lnhsis.logs (user, action, log_date) VALUES ('{self.current_user[0]}', '{action}', '{self.datetime}')")
-                except mysql.connector.Error as err:
-                    print("Error:", err)
-                connection.commit()
-
                 db.close()
                 self.warning.setWarning(f"{selected_itemname} was Deleted Successfully")
                 self.warning.show()
@@ -217,7 +169,7 @@ class Item_Mngmnt(QMainWindow):
             from printbarcode import PrintBarcode
 
             PrintBarcode.printCode(self,filepath)
-            
+    '''        
     def loadSearchedItem(self):
         db = Database()
 
@@ -225,16 +177,9 @@ class Item_Mngmnt(QMainWindow):
         cursor = connection.cursor()
 
         tbsearched = self.search_bar.text()
-        status = 0
-        if tbsearched.lower() == 'available':
-            status = 0
-        elif tbsearched.lower() == 'borrowed':
-            status = 1
-        else:
-            status = 2
 
         try:
-            cursor.execute(f"SELECT * FROM lnhsis.items WHERE item_name LIKE '%{tbsearched}%' OR quality LIKE '%{tbsearched}%' OR barcode LIKE '%{tbsearched}%' OR status = {status}")
+            cursor.execute(f"SELECT * FROM lnhsis.borrowers WHERE borrower_name LIKE '%{tbsearched}%' OR borrower_address LIKE '%{tbsearched}%' OR barcode LIKE '%{tbsearched}%' OR borrowed_item LIKE '%{tbsearched}%'")
         except mysql.connector.Error as err:
             print("Error:", err)
             connection.rollback()
@@ -246,40 +191,26 @@ class Item_Mngmnt(QMainWindow):
         self.model.removeRows(0, self.model.rowCount())
 
 
+        
         for row in results:
-            stat = 'Available'
-            name = ''
-            if row[5]:
-                stat = 'Borrowed'
-                
-                connection = db.connect()
-                cursor = connection.cursor()
-                try:
-                    cursor.execute(f"SELECT borrower_name FROM lnhsis.borrowers WHERE barcode = '{row[3]}' AND date_returned IS NULL")
-                except mysql.connector.Error as err:
-                    print("Error: ", err)
-
-                borrower = cursor.fetchone()
-                connection.close()
-                name = borrower[0]
 
             items = [
                 QStandardItem(row[1]),
                 QStandardItem(row[2]),
                 QStandardItem(row[3]),
-                QStandardItem(str(row[4])),
-                QStandardItem(stat),
-                QStandardItem(name),
+                QStandardItem(row[4]),
+                QStandardItem(row[5]),
+                QStandardItem(str(row[6])),
+                QStandardItem(str(row[7])),
+                QStandardItem(str(row[8]))
             ]
-            items.append(QStandardItem("Edit"))
-            items.append(QStandardItem("Delete"))
-            items.append(QStandardItem("Print"))
             self.model.appendRow(items)
 
+        self.view = self.main_table
         self.view.setModel(self.model)
 
 if __name__ == "__main__":
     app = QApplication([])
-    window = Item_Mngmnt()
+    window = Borrower_Mngmnt()
     window.show()
     app.exec()
