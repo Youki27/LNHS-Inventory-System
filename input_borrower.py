@@ -14,6 +14,19 @@ class BorrowerInfo(QMainWindow):
 
         self.warning = Warning()
 
+        db = Database()
+
+        connection = db.connect()
+        cursor = connection.cursor()
+
+        try:
+            cursor.execute("SELECT user FROM lnhsis.logs ORDER BY log_date LIMIT 1")
+        except mysql.connector.Error as err:
+            print("Error:", err)
+
+        self.current_user = cursor.fetchone()
+        db.close()
+
         self.barcode = self.findChild(QLineEdit, "barcode")
         self.item_name = self.findChild(QLineEdit, "item_name")
         self.borrower = self.findChild(QLineEdit, "borrower")
@@ -25,11 +38,11 @@ class BorrowerInfo(QMainWindow):
 
     def addBorrowerInfo(self, barcode):
 
-        current_datetime = datetime.datetime.now()
+        self.current_datetime = datetime.datetime.now()
 
         self.barcode.setText(barcode)
-        self.date_borrowed.setDateTime(current_datetime)
-        self.date_to_return.setDateTime(current_datetime)
+        self.date_borrowed.setDateTime(self.current_datetime)
+        self.date_to_return.setDateTime(self.current_datetime)
 
         db = Database()
         connection = db.connect()
@@ -50,15 +63,15 @@ class BorrowerInfo(QMainWindow):
 
     def saveData(self):
 
-        if not self.borrower:
+        if not self.borrower.text():
             self.warning.setWarning("Borrower Field is Empty!")
             self.warning.show()
             return
-        if not self.address:
+        if not self.address.text():
             self.warning.setWarning("Address Field is Empty!")
             self.warning.show()
             return
-        if not self.purpose:
+        if not self.purpose.toPlainText():
             self.warning.setWarning("Purpose Field is Empty!")
             self.warning.show()
             return
@@ -81,6 +94,13 @@ class BorrowerInfo(QMainWindow):
         except mysql.connector.Error as err:
             print("Error: ", err)
         
+        connection.commit()
+
+        try:
+            action = f"Item {self.item_name.text()} with the barcode {self.barcode.text()} was borrowed by {self.borrower.text()}"
+            cursor.execute(f"INSERT INTO lnhsis.logs (user, action, log_date) VALUES ('{self.current_user[0]}', '{action}', '{self.current_datetime}')")
+        except mysql.connector.Error as err:
+            print("Error:", err)
         connection.commit()
 
         db.close()

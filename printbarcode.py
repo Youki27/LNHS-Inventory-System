@@ -2,7 +2,8 @@ from PyQt6.QtWidgets import QApplication, QFileDialog, QMessageBox
 from PyQt6.QtPrintSupport import QPrintDialog, QPrinter
 from PyQt6.QtGui import QImage, QPainter
 from PyQt6.QtCore import Qt
-import sys
+from database import Database
+import sys, mysql.connector, datetime
 
 class PrintBarcode(QPrintDialog):
 
@@ -22,6 +23,27 @@ class PrintBarcode(QPrintDialog):
 
         # Show the print dialog
         if dialog.exec() == QPrintDialog.DialogCode.Accepted:
+
+            db = Database()
+            connection = db.connect()
+            cursor = connection.cursor()
+
+            try:
+                cursor.execute("SELECT user FROM lnhsis.logs ORDER BY log_date LIMIT 1;")
+            except mysql.connector.Error as err:
+                print("Error:", err)
+
+            current_user = cursor.fetchone()
+
+            try:
+                action = f"Printed {filepath}"
+                current_datetime = datetime.datetime.now()
+                cursor.execute(f"INSERT INTO lnhsis.logs (user, action, log_date) VALUES ('{current_user[0]}', '{action}', '{current_datetime}')")
+            except mysql.connector.Error as err:
+                print("Error:", err)
+            connection.commit()
+            db.close()
+
             painter = QPainter(printer)
             rect = painter.viewport()
             size = image.size()

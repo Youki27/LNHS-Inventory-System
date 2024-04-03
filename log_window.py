@@ -19,7 +19,7 @@ class ViewLogs(QMainWindow):
         self.add_items_button = self.findChild(QPushButton, "add_items_button")
         self.refresh_button = self.findChild(QPushButton, "refresh_button")
         self.main_table = self.findChild(QTableView, "main_table")
-        self.main_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.main_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
         self.search_bar = self.findChild(QLineEdit, "search_bar")
         self.search_button = self.findChild(QPushButton, "search_button")
 

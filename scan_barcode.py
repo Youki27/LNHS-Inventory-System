@@ -24,6 +24,19 @@ class Scanbarcode(QMainWindow):
 
         uic.loadUi("Ui/scan_window.ui", self)
 
+        db = Database()
+
+        connection = db.connect()
+        cursor = connection.cursor()
+
+        try:
+            cursor.execute("SELECT user FROM lnhsis.logs ORDER BY log_date LIMIT 1")
+        except mysql.connector.Error as err:
+            print("Error:", err)
+
+        self.current_user = cursor.fetchone()
+        db.close()
+
         self.warning = Warning()
 
         self.vBox = self.findChild(QVBoxLayout, "verticalLayout")
@@ -73,6 +86,14 @@ class Scanbarcode(QMainWindow):
                     connection.commit()
                 except mysql.connector.Error as err:
                     print("Error 2:", err)
+
+                try:
+                    action = f"Item with the barcode {self.barcode_box.text()} returned."
+                    cursor.execute(f"INSERT INTO lnhsis.logs (user, action, log_date) VALUES ('{self.current_user[0]}', '{action}', '{current_datetime}')")
+                except mysql.connector.Error as err:
+                    print("Error:", err)
+                connection.commit()
+
                 db.close()
 
                 self.warning.setWarning("Item Returned!")
