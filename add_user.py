@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import QLabel, QPushButton, QLineEdit, QCheckBox, QMainWindow, QWidget, QApplication
 from PyQt6 import uic
 from database import Database
-import mysql.connector
+import mysql.connector, datetime
 from warning_dialog import Warning
 
 class AddUser(QMainWindow):
@@ -14,6 +14,19 @@ class AddUser(QMainWindow):
         super(AddUser, self).__init__()
 
         uic.loadUi("Ui/add_user_window.ui", self)
+
+        db = Database()
+
+        connection = db.connect()
+        cursor = connection.cursor()
+
+        try:
+            cursor.execute("SELECT user FROM lnhsis.logs ORDER BY log_date LIMIT 1")
+        except mysql.connector.Error as err:
+            print("Error:", err)
+
+        self.current_user = cursor.fetchone()
+        db.close()
 
         self.username = self.findChild(QLineEdit,"username")
         self.password = self.findChild(QLineEdit, "password")
@@ -56,7 +69,16 @@ class AddUser(QMainWindow):
                     connection.commit()
                 except mysql.connector.Error as err:
                     print("Error ins Insert 2:", err)
-        connection.close()
+
+        try:
+            action = f"Added the user {self.username.text()}"
+            current_datetime = datetime.datetime.now()
+            cursor.execute(f"INSERT INTO lnhsis.logs (user, action, log_date) VALUES ('{self.current_user[0]}', '{action}', '{current_datetime}')")
+        except mysql.connector.Error as err:
+            print("Error:", err)
+        connection.commit()
+
+        db.close()
         self.warning.setWarning(f"User {self.username.text()}, saved!")
         self.warning.show()
                     

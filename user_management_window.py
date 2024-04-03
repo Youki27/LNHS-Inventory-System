@@ -4,7 +4,7 @@ from PyQt6 import uic
 from PyQt6.QtCore import pyqtSignal, QItemSelection, QModelIndex
 from add_user import AddUser
 from database import Database
-import mysql.connector
+import mysql.connector, datetime
 
 
 class User_Mngmnt(QMainWindow):
@@ -16,6 +16,19 @@ class User_Mngmnt(QMainWindow):
         super(User_Mngmnt,self).__init__()
 
         uic.loadUi("Ui/users_window.ui", self)
+
+        db = Database()
+
+        connection = db.connect()
+        cursor = connection.cursor()
+
+        try:
+            cursor.execute("SELECT user FROM lnhsis.logs ORDER BY log_date LIMIT 1")
+        except mysql.connector.Error as err:
+            print("Error:", err)
+
+        self.current_user = cursor.fetchone()
+        db.close()
 
         self.return_button = self.findChild(QPushButton, "return_button")
         self.add_user_button = self.findChild(QPushButton, "add_user_button")
@@ -164,6 +177,14 @@ class User_Mngmnt(QMainWindow):
                         connection.commit()
                     except mysql.connector.Error as err:
                         print("Error 4: ", err)
+
+                try:
+                    action = f"Deleted the item {selected_username}"
+                    current_datetime = datetime.datetime.now()
+                    cursor.execute(f"INSERT INTO lnhsis.logs (user, action, log_date) VALUES ('{self.current_user[0]}', '{action}', '{current_datetime}')")
+                except mysql.connector.Error as err:
+                    print("Error:", err)
+                connection.commit()
 
                 db.close()
                 self.warning.setWarning(f"{selected_username} was Deleted Successfully")

@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import QLabel, QPushButton, QLineEdit, QCheckBox, QMainWindow, QWidget, QApplication
 from PyQt6 import uic
 from database import Database
-import mysql.connector
+import mysql.connector, datetime
 from warning_dialog import Warning
 
 class EditUsers(QMainWindow):
@@ -12,6 +12,19 @@ class EditUsers(QMainWindow):
         uic.loadUi("Ui/add_user_window.ui", self)
 
         self.warning = Warning()
+
+        db = Database()
+
+        connection = db.connect()
+        cursor = connection.cursor()
+
+        try:
+            cursor.execute("SELECT user FROM lnhsis.logs ORDER BY log_date LIMIT 1")
+        except mysql.connector.Error as err:
+            print("Error:", err)
+
+        self.current_user = cursor.fetchone()
+        db.close()
 
         self.label = self.findChild(QLabel,"label")
         self.username = self.findChild(QLineEdit, "username")
@@ -101,7 +114,13 @@ class EditUsers(QMainWindow):
                     connection.commit()
                 except mysql.connector.Error as err:
                     print("Error:", err)
-
+        try:
+            action = f"Edited the user {self.uname}/{self.username.text()}"
+            current_datetime = datetime.datetime.now()
+            cursor.execute(f"INSERT INTO lnhsis.logs (user, action, log_date) VALUES ('{self.current_user[0]}', '{action}', '{current_datetime}')")
+        except mysql.connector.Error as err:
+            print("Error:", err)
+        connection.commit()
         db.close()
         self.close()
         self.warning.setWarning("Edit Saved!")
