@@ -195,6 +195,10 @@ class User_Mngmnt(QMainWindow):
                 self.warning.setWarning("Deletion Cancelled!")
                 self.warning.show()
 
+    def showEvent(self, event):
+        super().showEvent(event)
+        self.loadUsers()
+
     def loadSearchedItem(self):
         db = Database()
 

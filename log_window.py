@@ -63,7 +63,12 @@ class ViewLogs(QMainWindow):
 
         self.view = self.main_table
         self.view.setModel(self.model)
-        #self.main_table.selectionModel().selectionChanged.connect(self.tableItemClicked)    
+        #self.main_table.selectionModel().selectionChanged.connect(self.tableItemClicked)
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self.loadLogs()
+
     def loadSearchedItem(self):
         db = Database()
 

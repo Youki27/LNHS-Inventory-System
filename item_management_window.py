@@ -1,4 +1,4 @@
-from PyQt6.QtGui import QCloseEvent, QStandardItem, QStandardItemModel
+from PyQt6.QtGui import QCloseEvent, QFocusEvent, QStandardItem, QStandardItemModel
 from PyQt6.QtWidgets import QPushButton, QMainWindow, QApplication, QLineEdit,QTableView, QHeaderView, QDialog
 from PyQt6 import uic
 from PyQt6.QtCore import pyqtSignal, QModelIndex
@@ -217,7 +217,11 @@ class Item_Mngmnt(QMainWindow):
             from printbarcode import PrintBarcode
 
             PrintBarcode.printCode(self,filepath)
-            
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self.loadItems()
+
     def loadSearchedItem(self):
         db = Database()
 
