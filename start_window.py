@@ -22,8 +22,6 @@ class Login_Window(QMainWindow):
         self.usr_mngmt_win = User_Mngmnt()
         self.main_menu_window.closed_to_login.connect(self.show)
 
-
-
     def login(self):
         db = Database()
 

@@ -1,3 +1,4 @@
+from PyQt6.QtGui import QShowEvent
 from PyQt6.QtWidgets import QPushButton, QApplication,QMainWindow
 from PyQt6 import uic
 from user_management_window import User_Mngmnt
@@ -7,6 +8,7 @@ from log_window import ViewLogs
 from scan_barcode import Scanbarcode
 from PyQt6.QtCore import pyqtSignal
 from database import Database
+from warning_dialog import Warning
 import mysql.connector, datetime
 
 class Main_menu(QMainWindow):
@@ -18,18 +20,7 @@ class Main_menu(QMainWindow):
 
         uic.loadUi("Ui/Management_Window.ui", self)
 
-        db = Database()
-
-        connection = db.connect()
-        cursor = connection.cursor()
-
-        try:
-            cursor.execute("SELECT user FROM lnhsis.logs ORDER BY log_date LIMIT 1")
-        except mysql.connector.Error as err:
-            print("Error:", err)
-
-        self.current_user = cursor.fetchone()
-        db.close()
+        self.warning = Warning()
 
         self.users_button = self.findChild(QPushButton, "user_button")
         self.items_button = self.findChild(QPushButton, "items_button")
@@ -61,23 +52,100 @@ class Main_menu(QMainWindow):
         self.logout()
         super().closeEvent(event)
 
+    def showEvent(self, event):
+        super().showEvent(event)
+        db = Database()
+
+        connection = db.connect()
+        cursor = connection.cursor()
+
+        try:
+            cursor.execute("SELECT user FROM lnhsis.logs ORDER BY log_id DESC LIMIT 1")
+        except mysql.connector.Error as err:
+            print("Error:", err)
+
+        self.current_user = cursor.fetchone()
+        db.close()
+
     def manage_borrowers(self):
         self.borrower_window.show()
         self.hide()
 
     def view_logs(self):
+        db = Database()
+        connection = db.connect()
+        cursor = connection.cursor()
+
+        try:
+            cursor.execute(f"SELECT * FROM lnhsis.permissions WHERE perm_user = '{self.current_user[0]}' AND (perm_val LIKE '%logs%' OR perm_val LIKE '%admin%')")
+        except mysql.connector.Error as err:
+            print("Error:", err)
+        
+        result = cursor.fetchone()
+        db.close()
+
+        if not result:
+            self.warning.setWarning("You have no permission to access this feature.")
+            self.warning.exec()
+            return
         self.log_window.show()
         self.hide()
 
     def manage_users(self):
+        db = Database()
+        connection = db.connect()
+        cursor = connection.cursor()
+
+        try:
+            cursor.execute(f"SELECT * FROM lnhsis.permissions WHERE perm_user = '{self.current_user[0]}' AND (perm_val LIKE '%users%' OR perm_val LIKE '%admin%')")
+        except mysql.connector.Error as err:
+            print("Error:", err)
+        
+        result = cursor.fetchone()
+        db.close()
+
+        if not result:
+            self.warning.setWarning("You have no permission to access this feature.")
+            self.warning.exec()
+            return
         self.usr_mng_window.show()
         self.hide()
 
     def manage_items(self):
+        db = Database()
+        connection = db.connect()
+        cursor = connection.cursor()
+
+        try:
+            cursor.execute(f"SELECT * FROM lnhsis.permissions WHERE perm_user = '{self.current_user[0]}' AND (perm_val LIKE '%items%' OR perm_val LIKE '%admin%')")
+        except mysql.connector.Error as err:
+            print("Error:", err)
+        
+        result = cursor.fetchone()
+        db.close()
+        if not result:
+            self.warning.setWarning("You have no permission to access this feature.")
+            self.warning.exec()
+            return
         self.itm_mng_window.show()
         self.hide()
 
     def scan_barcode(self):
+        db = Database()
+        connection = db.connect()
+        cursor = connection.cursor()
+
+        try:
+            cursor.execute(f"SELECT * FROM lnhsis.permissions WHERE perm_user = '{self.current_user[0]}' AND (perm_val LIKE '%barcode%' OR perm_val LIKE '%admin%')")
+        except mysql.connector.Error as err:
+            print("Error:", err)
+        
+        result = cursor.fetchone()
+        db.close()
+        if not result:
+            self.warning.setWarning("You have no permission to access this feature.")
+            self.warning.exec()
+            return
         self.scan_window.show()
         self.hide()
 

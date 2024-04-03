@@ -19,7 +19,7 @@ class EditUsers(QMainWindow):
         cursor = connection.cursor()
 
         try:
-            cursor.execute("SELECT user FROM lnhsis.logs ORDER BY log_date LIMIT 1")
+            cursor.execute("SELECT user FROM lnhsis.logs ORDER BY log_date DESC LIMIT 1")
         except mysql.connector.Error as err:
             print("Error:", err)
 
