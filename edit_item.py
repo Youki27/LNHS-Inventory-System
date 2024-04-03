@@ -83,7 +83,7 @@ class EditItems(QMainWindow):
             connection.commit()
 
         try:
-            action = f"Edited the item {self.item}"
+            action = f"Edited the item with the barcode {self.brcd}"
             cursor.execute(f"INSERT INTO lnhsis.logs (user, action, log_date) VALUES ('{self.current_user[0]}', '{action}', '{self.datetime.text()}')")
         except mysql.connector.Error as err:
             print("Error:", err)
