@@ -1,11 +1,14 @@
 from PyQt6.QtWidgets import QLabel, QPushButton, QLineEdit, QMainWindow, QApplication, QComboBox, QDateTimeEdit
 from PyQt6 import uic
+from PyQt6.QtCore import pyqtSignal
 from database import Database
 import mysql.connector
 from warning_dialog import Warning
 from datetime import datetime
 
 class EditItems(QMainWindow):
+
+    update_ = pyqtSignal()
     
     def __init__(self):
         super(EditItems, self).__init__()
@@ -33,6 +36,7 @@ class EditItems(QMainWindow):
         self.datetime = self.findChild(QDateTimeEdit, "datetime_added")
         self.save_button = self.findChild(QPushButton, "save_button")
         self.label = self.findChild(QLabel, "label")
+        self.donor_input = self.findChild(QLineEdit, "donor_input")
 
         self.quality.addItem("Good")
         self.quality.addItem("Bad")
@@ -50,6 +54,9 @@ class EditItems(QMainWindow):
         self.date = creds[3]
         self.stat = creds[4]
         self.borrower = creds[5]
+        self.donor = creds[6]
+        if not self.donor:
+            self.donor = "None"
 
         self.curr_datetime = datetime.strptime(self.date, "%Y-%m-%d %H:%M:%S")
 
@@ -57,6 +64,7 @@ class EditItems(QMainWindow):
         self.quality.setCurrentText(self.qual)
         self.barcode.setText(self.brcd)
         self.datetime.setDateTime(self.curr_datetime)
+        self.donor_input.setText(self.donor)
 
     def saveEdit(self):
 
@@ -76,7 +84,7 @@ class EditItems(QMainWindow):
             item_id = cursor.fetchall()
 
             try:
-                cursor.execute(f"UPDATE lnhsis.items SET item_name = '{self.item_name.text()}', quality = '{self.quality.currentText()}', date_added = '{self.datetime.text()}' WHERE item_id = {item_id[0][0]}")
+                cursor.execute(f"UPDATE lnhsis.items SET item_name = '{self.item_name.text()}', quality = '{self.quality.currentText()}', date_added = '{self.datetime.text()}', donor = '{self.donor_input.text()}' WHERE item_id = {item_id[0][0]}")
             except mysql.connector.Error as err:
                 print("Error:", err)
 
@@ -92,6 +100,7 @@ class EditItems(QMainWindow):
 
 
         db.close()
+        self.update_.emit()
         self.close()
         self.warning.setWarning("Edit Saved!")
         self.warning.show()

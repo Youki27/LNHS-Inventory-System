@@ -1,11 +1,14 @@
 from PyQt6.QtWidgets import QLabel, QPushButton, QLineEdit, QCheckBox, QMainWindow, QDialog, QApplication, QComboBox, QDateTimeEdit, QFileDialog
 from PyQt6 import uic
+from PyQt6.QtCore import pyqtSignal
 from database import Database
 import mysql.connector
 import uuid, datetime
 from warning_dialog import Warning
 
 class AddItem(QMainWindow):
+
+    update_ = pyqtSignal()
 
     def __init__(self):
         super(AddItem, self).__init__()
@@ -32,6 +35,7 @@ class AddItem(QMainWindow):
         self.quality = self.findChild(QComboBox, "quality_box")
         self.datetime = self.findChild(QDateTimeEdit, "datetime_added")
         self.save_button = self.findChild(QPushButton, "save_button")
+        self.donor_input = self.findChild(QLineEdit, "donor_input")
 
         self.unique_code = str(uuid.uuid4())
         current_datetime = datetime.datetime.now()
@@ -45,10 +49,13 @@ class AddItem(QMainWindow):
 
     def saveData(self):
 
-        if not self.item_name.text:
+        if not self.item_name.text():
             self.warning.setWarning("Item Name Field is Empty!")
             self.warning.show()
             return
+        donor = self.donor_input.text()
+        if not self.donor_input.text():
+            donor = "None"
 
         db = Database()
 
@@ -56,7 +63,7 @@ class AddItem(QMainWindow):
         cursor = connection.cursor()
 
         try:
-            cursor.execute(f"INSERT INTO lnhsis.items (item_name, quality, barcode, date_added, status) VALUES ('{self.item_name.text()}', '{self.quality.currentText()}', '{self.barcode.text()}', '{self.datetime.text()}', 0)")
+            cursor.execute(f"INSERT INTO lnhsis.items (item_name, quality, barcode, date_added, status, donor) VALUES ('{self.item_name.text()}', '{self.quality.currentText()}', '{self.barcode.text()}', '{self.datetime.text()}', 0, '{donor}')")
         except mysql.connector.Error as err:
             print("Error: ", err)
 
@@ -102,6 +109,8 @@ class AddItem(QMainWindow):
             PrintBarcode.printCode(self,filepath)
 
             os.remove(f"{filepath}.png")
+        
+        self.update_.emit()
             
 
         self.close()

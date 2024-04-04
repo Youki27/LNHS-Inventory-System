@@ -3,6 +3,7 @@ from PyQt6.QtWidgets import QPushButton, QMainWindow, QApplication, QLineEdit,QT
 from PyQt6 import uic
 from PyQt6.QtCore import pyqtSignal, QModelIndex
 from add_item import AddItem
+from edit_item import EditItems
 from database import Database
 import mysql.connector, datetime
 
@@ -42,6 +43,11 @@ class Item_Mngmnt(QMainWindow):
         self.search_button.clicked.connect(self.loadSearchedItem)
         self.datetime = datetime.datetime.now()
 
+        
+        self.add_item_window = AddItem()
+        self.add_item_window.update_.connect(self.loadItems)
+        self.edit_item_window = EditItems()
+        self.edit_item_window.update_.connect(self.loadItems)
         self.loadItems()
 
     def closeEvent(self, event):
@@ -59,7 +65,7 @@ class Item_Mngmnt(QMainWindow):
         cursor = connection.cursor()
         
         try:
-            cursor.execute(f"SELECT item_name, quality, barcode, date_added, status FROM lnhsis.items")
+            cursor.execute(f"SELECT item_name, quality, barcode, date_added,donor,status FROM lnhsis.items")
         except mysql.connector.Error as err:
             print("Error:", err)
 
@@ -67,13 +73,13 @@ class Item_Mngmnt(QMainWindow):
         connection.close()
         
         self.model = QStandardItemModel(0,6)
-        self.model.setHorizontalHeaderLabels(['Item','Quality','Barcode', 'Date Added','Status','Borrower','','',''])
+        self.model.setHorizontalHeaderLabels(['Item','Quality','Barcode', 'Date Added','Status','Borrower','Donor','','',''])
 
         items = []
         for row in results:
             stat = 'Available'
             name = ''
-            if row[4]:
+            if row[5]:
                 stat = 'Borrowed'
                 connection = db.connect()
                 cursor = connection.cursor()
@@ -92,7 +98,8 @@ class Item_Mngmnt(QMainWindow):
                 QStandardItem(row[2]),
                 QStandardItem(str(row[3])),
                 QStandardItem(stat),
-                QStandardItem(name)
+                QStandardItem(name),
+                QStandardItem(row[4])
             ]
             items.append(QStandardItem("Edit"))
             items.append(QStandardItem("Delete"))
@@ -101,14 +108,15 @@ class Item_Mngmnt(QMainWindow):
 
         self.view = self.main_table
         self.view.setModel(self.model)
-        self.view.setColumnWidth(0, 150)
+        self.view.setColumnWidth(0, 175)
         self.view.setColumnWidth(1, 75)
         self.view.setColumnWidth(2, 250)
         self.view.setColumnWidth(3, 150)
-        self.view.setColumnWidth(5, 150)
-        self.view.setColumnWidth(6, 50)
+        self.view.setColumnWidth(5, 175)
+        self.view.setColumnWidth(6, 175)
         self.view.setColumnWidth(7, 50)
         self.view.setColumnWidth(8, 50)
+        self.view.setColumnWidth(9, 50)
         self.main_table.selectionModel().selectionChanged.connect(self.tableItemClicked)
 
     def tableItemClicked(self, item:QModelIndex):
@@ -129,6 +137,7 @@ class Item_Mngmnt(QMainWindow):
         date_index = self.model.index(selected_item.row(),3)
         status_index = self.model.index(selected_item.row(),4)
         borrower_index = self.model.index(selected_item.row(),5)
+        donor_index = self.model.index(selected_item.row(),6)
 
         selected_itemname = self.model.data(itemname_index)
         selected_quality = self.model.data(quality_index)
@@ -136,14 +145,13 @@ class Item_Mngmnt(QMainWindow):
         selected_date = self.model.data(date_index)
         selected_status = self.model.data(status_index)
         selected_borrower = self.model.data(borrower_index)
+        selected_donor = self.model.data(donor_index)
 
         if selected_item_data == "Edit":
 
-            creds = [selected_itemname, selected_quality, selected_barcode, selected_date, selected_status, selected_borrower]
+            creds = [selected_itemname, selected_quality, selected_barcode, selected_date, selected_status, selected_borrower, selected_donor]
 
-            from edit_item import EditItems
-
-            self.edit_item_window = EditItems()
+            
             self.edit_item_window.editItem(creds)
             self.edit_item_window.show()
             
@@ -243,7 +251,7 @@ class Item_Mngmnt(QMainWindow):
             status = 2
 
         try:
-            cursor.execute(f"SELECT * FROM lnhsis.items WHERE item_name LIKE '%{tbsearched}%' OR quality LIKE '%{tbsearched}%' OR barcode LIKE '%{tbsearched}%' OR status = {status}")
+            cursor.execute(f"SELECT * FROM lnhsis.items WHERE item_name LIKE '%{tbsearched}%' OR quality LIKE '%{tbsearched}%' OR barcode LIKE '%{tbsearched}%' OR status = {status} OR donor LIKE '%{tbsearched}%'")
         except mysql.connector.Error as err:
             print("Error:", err)
             connection.rollback()
@@ -279,6 +287,7 @@ class Item_Mngmnt(QMainWindow):
                 QStandardItem(str(row[4])),
                 QStandardItem(stat),
                 QStandardItem(name),
+                QStandardItem(row[5])
             ]
             items.append(QStandardItem("Edit"))
             items.append(QStandardItem("Delete"))
