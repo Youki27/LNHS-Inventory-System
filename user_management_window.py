@@ -1,7 +1,8 @@
-from PyQt6.QtGui import QStandardItem, QStandardItemModel
-from PyQt6.QtWidgets import QPushButton, QMainWindow, QApplication, QLineEdit,QTableView, QHeaderView, QDialog
+from PyQt6.QtGui import QStandardItem, QStandardItemModel, QTextDocument
+from PyQt6.QtWidgets import QPushButton, QMainWindow, QApplication, QLineEdit,QTableView, QHeaderView, QDialog, QFileDialog
 from PyQt6 import uic
-from PyQt6.QtCore import pyqtSignal, QItemSelection, QModelIndex
+from PyQt6.QtCore import pyqtSignal, QItemSelection, QModelIndex, QAbstractTableModel
+from PyQt6.QtPrintSupport import QPrinter
 from add_user import AddUser
 from database import Database
 import mysql.connector, datetime
@@ -36,12 +37,14 @@ class User_Mngmnt(QMainWindow):
         self.main_table = self.findChild(QTableView, "main_table")
         self.refresh_button = self.findChild(QPushButton, "refresh_button")
         self.search_button = self.findChild(QPushButton, "search_button")
+        self.print_table = self.findChild(QPushButton, "print_table")
 
         self.return_button.clicked.connect(self.Return_)
         self.add_user_button.clicked.connect(self.addUser)
         self.refresh_button.clicked.connect(self.loadUsers)
         self.main_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         self.search_button.clicked.connect(self.loadSearchedItem)
+        self.print_table.clicked.connect(self.printTable)
 
         self.loadUsers()
 
@@ -101,6 +104,13 @@ class User_Mngmnt(QMainWindow):
         self.view.setModel(self.model)
         self.view.setColumnWidth(2, 650)
         self.main_table.selectionModel().selectionChanged.connect(self.tableItemClicked)
+
+    def printTable(self):
+        
+        from print_table import PrintTable
+
+        self.print_ = PrintTable()
+        self.print_.print_document(self.view)
 
     def tableItemClicked(self, item:QModelIndex):
 

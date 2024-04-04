@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1265</width>
-    <height>599</height>
+    <height>634</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -160,6 +160,19 @@ color:#333333;</string>
     <attribute name="horizontalHeaderStretchLastSection">
      <bool>false</bool>
     </attribute>
+   </widget>
+   <widget class="QPushButton" name="print_table">
+    <property name="geometry">
+     <rect>
+      <x>1170</x>
+      <y>560</y>
+      <width>91</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Print Table</string>
+    </property>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">

@@ -19,14 +19,16 @@ class ViewLogs(QMainWindow):
         self.add_items_button = self.findChild(QPushButton, "add_items_button")
         self.refresh_button = self.findChild(QPushButton, "refresh_button")
         self.main_table = self.findChild(QTableView, "main_table")
-        self.main_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+        self.main_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         self.search_bar = self.findChild(QLineEdit, "search_bar")
         self.search_button = self.findChild(QPushButton, "search_button")
+        self.print_table = self.findChild(QPushButton, "print_table")
 
         self.return_button.clicked.connect(self.close)
         self.add_items_button.setVisible(False)
         self.refresh_button.clicked.connect(self.loadLogs)
         self.search_button.clicked.connect(self.loadSearchedItem)
+        self.print_table.clicked.connect(self.printTable)
 
         self.loadLogs()
 
@@ -63,7 +65,16 @@ class ViewLogs(QMainWindow):
 
         self.view = self.main_table
         self.view.setModel(self.model)
+        self.view.setColumnWidth(1, 950)
+        self.view.setColumnWidth(2, 150)
         #self.main_table.selectionModel().selectionChanged.connect(self.tableItemClicked)
+
+    def printTable(self):
+        
+        from print_table import PrintTable
+
+        self.print_ = PrintTable()
+        self.print_.print_document(self.view)
 
     def showEvent(self, event):
         super().showEvent(event)

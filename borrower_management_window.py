@@ -22,11 +22,13 @@ class Borrower_Mngmnt(QMainWindow):
         self.main_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.search_bar = self.findChild(QLineEdit, "search_bar")
         self.search_button = self.findChild(QPushButton, "search_button")
+        self.print_table = self.findChild(QPushButton, "print_table")
 
         self.return_button.clicked.connect(self.close)
         self.add_items_button.setVisible(False)
         self.refresh_button.clicked.connect(self.loadItems)
         self.search_button.clicked.connect(self.loadSearchedItem)
+        self.print_table.clicked.connect(self.printTable)
 
         self.loadItems()
 
@@ -69,6 +71,13 @@ class Borrower_Mngmnt(QMainWindow):
         self.view = self.main_table
         self.view.setModel(self.model)
         #self.main_table.selectionModel().selectionChanged.connect(self.tableItemClicked)
+
+    def printTable(self):
+        
+        from print_table import PrintTable
+
+        self.print_ = PrintTable()
+        self.print_.print_document(self.view)
 
     def showEvent(self, event):
         super().showEvent(event)

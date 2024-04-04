@@ -36,12 +36,14 @@ class Item_Mngmnt(QMainWindow):
         self.main_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
         self.search_bar = self.findChild(QLineEdit, "search_bar")
         self.search_button = self.findChild(QPushButton, "search_button")
+        self.print_table = self.findChild(QPushButton, "print_table")
 
         self.return_button.clicked.connect(self.close)
         self.add_items_button.clicked.connect(self.addItem)
         self.refresh_button.clicked.connect(self.loadItems)
         self.search_button.clicked.connect(self.loadSearchedItem)
         self.datetime = datetime.datetime.now()
+        self.print_table.clicked.connect(self.printTable)
 
         
         self.add_item_window = AddItem()
@@ -118,6 +120,13 @@ class Item_Mngmnt(QMainWindow):
         self.view.setColumnWidth(8, 50)
         self.view.setColumnWidth(9, 50)
         self.main_table.selectionModel().selectionChanged.connect(self.tableItemClicked)
+
+    def printTable(self):
+        
+        from print_table import PrintTable
+
+        self.print_ = PrintTable()
+        self.print_.print_document(self.view)
 
     def tableItemClicked(self, item:QModelIndex):
 
