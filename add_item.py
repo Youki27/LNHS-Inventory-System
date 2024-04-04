@@ -84,8 +84,11 @@ class AddItem(QMainWindow):
             connection.commit()
             db.close()
 
-            import barcode
+            import barcode, os
             from barcode.writer import ImageWriter
+
+            if not os.path.exists('Barcodes'):
+                os.makedirs('Barcodes')
 
             Code128 = barcode.get_barcode_class('code128')
             code128 = Code128(self.unique_code, writer = ImageWriter())
@@ -97,6 +100,8 @@ class AddItem(QMainWindow):
             from printbarcode import PrintBarcode
 
             PrintBarcode.printCode(self,filepath)
+
+            os.remove(f"{filepath}.png")
             
 
         self.close()

@@ -203,6 +203,9 @@ class Item_Mngmnt(QMainWindow):
             import barcode, os
             from barcode.writer import ImageWriter
 
+            if not os.path.exists('Barcodes'):
+                os.makedirs('Barcodes')
+
             filepath = f'Barcodes/{selected_itemname}_{selected_barcode}'
 
             if os.path.exists(filepath) and os.path.isfile(filepath):
@@ -217,6 +220,8 @@ class Item_Mngmnt(QMainWindow):
             from printbarcode import PrintBarcode
 
             PrintBarcode.printCode(self,filepath)
+
+            os.remove(f"{filepath}.png")
 
     def showEvent(self, event):
         super().showEvent(event)
