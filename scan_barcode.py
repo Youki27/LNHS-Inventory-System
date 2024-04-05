@@ -24,19 +24,6 @@ class Scanbarcode(QMainWindow):
 
         uic.loadUi("Ui/scan_window.ui", self)
 
-        db = Database()
-
-        connection = db.connect()
-        cursor = connection.cursor()
-
-        try:
-            cursor.execute("SELECT user FROM lnhsis.logs ORDER BY log_date DESC LIMIT 1")
-        except mysql.connector.Error as err:
-            print("Error:", err)
-
-        self.current_user = cursor.fetchone()
-        db.close()
-
         self.warning = Warning()
 
         self.vBox = self.findChild(QVBoxLayout, "verticalLayout")
@@ -52,6 +39,22 @@ class Scanbarcode(QMainWindow):
     def closeEvent(self, event):
         self.return_.emit()
         super().closeEvent(event)
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        
+        db = Database()
+
+        connection = db.connect()
+        cursor = connection.cursor()
+
+        try:
+            cursor.execute("SELECT user FROM lnhsis.logs ORDER BY log_date DESC LIMIT 1")
+        except mysql.connector.Error as err:
+            print("Error:", err)
+
+        self.current_user = cursor.fetchone()
+        db.close()
 
     def verifyBarcode(self):
         db = Database()

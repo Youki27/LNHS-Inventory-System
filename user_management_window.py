@@ -18,19 +18,6 @@ class User_Mngmnt(QMainWindow):
 
         uic.loadUi("Ui/users_window.ui", self)
 
-        db = Database()
-
-        connection = db.connect()
-        cursor = connection.cursor()
-
-        try:
-            cursor.execute("SELECT user FROM lnhsis.logs ORDER BY log_date DESC LIMIT 1")
-        except mysql.connector.Error as err:
-            print("Error:", err)
-
-        self.current_user = cursor.fetchone()
-        db.close()
-
         self.return_button = self.findChild(QPushButton, "return_button")
         self.add_user_button = self.findChild(QPushButton, "add_user_button")
         self.search_bar = self.findChild(QLineEdit, "search_bar")
@@ -208,6 +195,19 @@ class User_Mngmnt(QMainWindow):
     def showEvent(self, event):
         super().showEvent(event)
         self.loadUsers()
+
+        db = Database()
+
+        connection = db.connect()
+        cursor = connection.cursor()
+
+        try:
+            cursor.execute("SELECT user FROM lnhsis.logs ORDER BY log_date DESC LIMIT 1")
+        except mysql.connector.Error as err:
+            print("Error:", err)
+
+        self.current_user = cursor.fetchone()
+        db.close()
 
     def loadSearchedItem(self):
         db = Database()
