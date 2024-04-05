@@ -3,7 +3,7 @@ from PyQt6 import uic
 from PyQt6.QtCore import pyqtSignal
 from database import Database
 import mysql.connector
-import uuid, datetime
+import uuid, datetime, os, sys
 from warning_dialog import Warning
 
 class AddItem(QMainWindow):
@@ -91,30 +91,35 @@ class AddItem(QMainWindow):
             connection.commit()
             db.close()
 
-            import barcode, os
+            import os
+            from barcode import codex
             from barcode.writer import ImageWriter
 
             if not os.path.exists('Barcodes'):
                 os.makedirs('Barcodes')
 
-            Code128 = barcode.get_barcode_class('code128')
-            code128 = Code128(self.unique_code, writer = ImageWriter())
+            Code128 = codex.Code128(self.unique_code, writer = ImageWriter())
 
-            filepath = f'Barcodes/{self.item_name.text()}_{self.barcode.text()}'
+            filepath = f'Barcodes\{self.item_name.text()}_{self.barcode.text()}'
 
-            code128.save(filepath, options={'write_text' : False})
+            Code128.save(filepath, options={'write_text':False})
 
             from printbarcode import PrintBarcode
+            try:
+                self.print_barcode = PrintBarcode()
 
-            PrintBarcode.printCode(self,filepath)
-
-            os.remove(f"{filepath}.png")
+                self.print_barcode.print_document(filepath)
+            finally:
+                os.remove(f"{filepath}.png")
         
         self.update_.emit()
             
 
         self.close()
 
+    def resource_path(self,relative_path):
+        base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+        return os.path.join(base_path, relative_path)
 
 
     

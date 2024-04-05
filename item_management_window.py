@@ -5,7 +5,7 @@ from PyQt6.QtCore import pyqtSignal, QModelIndex
 from add_item import AddItem
 from edit_item import EditItems
 from database import Database
-import mysql.connector, datetime
+import mysql.connector, datetime, os, sys
 
 class Item_Mngmnt(QMainWindow):
 
@@ -201,10 +201,9 @@ class Item_Mngmnt(QMainWindow):
 
         if selected_item_data == "Print":
 
-
-
             from printbarcode import PrintBarcode
-            import barcode, os
+            import os
+            from barcode import codex
             from barcode.writer import ImageWriter
 
             if not os.path.exists('Barcodes'):
@@ -212,20 +211,21 @@ class Item_Mngmnt(QMainWindow):
 
             filepath = f'Barcodes/{selected_itemname}_{selected_barcode}'
 
-            if os.path.exists(filepath) and os.path.isfile(filepath):
-                PrintBarcode.printCode(self,filepath)
-                return
+            try:
+                Code128 = codex.Code128(selected_barcode, writer=ImageWriter())
 
-            Code128 = barcode.get_barcode_class('code128')
-            code128 = Code128(selected_barcode, writer = ImageWriter())
+                Code128.save(filepath, options={'write_text':False})
 
-            code128.save(filepath, options={'write_text' : True})
+                from printbarcode import PrintBarcode
 
-            from printbarcode import PrintBarcode
+                self.printBarcode = PrintBarcode()
+                self.printBarcode.print_document(filepath)
+            finally:
+                os.remove(f"{filepath}.png")
 
-            PrintBarcode.printCode(self,filepath)
-
-            os.remove(f"{filepath}.png")
+    def resource_path(self,relative_path):
+        base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+        return os.path.join(base_path, relative_path)
 
     def showEvent(self, event):
         super().showEvent(event)
