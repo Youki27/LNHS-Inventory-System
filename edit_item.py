@@ -37,10 +37,17 @@ class EditItems(QMainWindow):
         self.save_button = self.findChild(QPushButton, "save_button")
         self.label = self.findChild(QLabel, "label")
         self.donor_input = self.findChild(QLineEdit, "donor_input")
+        self.owner = self.findChild(QComboBox, "owner")
 
         self.quality.addItem("Good")
         self.quality.addItem("Bad")
         self.quality.addItem("Broken")
+        self.owner.addItem("BPP")
+        self.owner.addItem("COOKERY")
+        self.owner.addItem("CSS")
+        self.owner.addItem("EIM")
+        self.owner.addItem("EPASS")
+        self.owner.addItem("FBC")
 
         self.label.setText("Edit User")
 
@@ -55,6 +62,7 @@ class EditItems(QMainWindow):
         self.stat = creds[4]
         self.borrower = creds[5]
         self.donor = creds[6]
+        self.owner_ = creds[7]
         if not self.donor:
             self.donor = "None"
 
@@ -65,6 +73,7 @@ class EditItems(QMainWindow):
         self.barcode.setText(self.brcd)
         self.datetime.setDateTime(self.curr_datetime)
         self.donor_input.setText(self.donor)
+        self.owner.setCurrentText(self.owner_)
 
     def saveEdit(self):
 
@@ -84,7 +93,7 @@ class EditItems(QMainWindow):
             item_id = cursor.fetchall()
 
             try:
-                cursor.execute(f"UPDATE lnhsis.items SET item_name = '{self.item_name.text()}', quality = '{self.quality.currentText()}', date_added = '{self.datetime.text()}', donor = '{self.donor_input.text()}' WHERE item_id = {item_id[0][0]}")
+                cursor.execute(f"UPDATE lnhsis.items SET item_name = '{self.item_name.text()}', quality = '{self.quality.currentText()}', date_added = '{self.datetime.text()}', donor = '{self.donor_input.text()}', owner = '{self.owner.currentText()}' WHERE item_id = {item_id[0][0]}")
             except mysql.connector.Error as err:
                 print("Error:", err)
 

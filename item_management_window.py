@@ -54,15 +54,14 @@ class Item_Mngmnt(QMainWindow):
         cursor = connection.cursor()
         
         try:
-            cursor.execute(f"SELECT item_name, quality, barcode, date_added,donor,status FROM lnhsis.items")
+            cursor.execute(f"SELECT item_name, quality, barcode, date_added,donor,status, owner FROM lnhsis.items")
         except mysql.connector.Error as err:
             print("Error:", err)
 
         results = cursor.fetchall()
         connection.close()
-        
         self.model = QStandardItemModel(0,6)
-        self.model.setHorizontalHeaderLabels(['Item','Quality','Barcode', 'Date Added','Status','Borrower','Donor','','',''])
+        self.model.setHorizontalHeaderLabels(['Item','Quality','Barcode', 'Date Added','Status','Borrower','Donor','Owner','','',''])
 
         items = []
         for row in results:
@@ -88,7 +87,8 @@ class Item_Mngmnt(QMainWindow):
                 QStandardItem(str(row[3])),
                 QStandardItem(stat),
                 QStandardItem(name),
-                QStandardItem(row[4])
+                QStandardItem(row[4]),
+                QStandardItem(row[6])
             ]
             items.append(QStandardItem("Edit"))
             items.append(QStandardItem("Delete"))
@@ -102,10 +102,11 @@ class Item_Mngmnt(QMainWindow):
         self.view.setColumnWidth(2, 250)
         self.view.setColumnWidth(3, 150)
         self.view.setColumnWidth(5, 175)
-        self.view.setColumnWidth(6, 175)
+        self.view.setColumnWidth(6, 125)
         self.view.setColumnWidth(7, 50)
         self.view.setColumnWidth(8, 50)
         self.view.setColumnWidth(9, 50)
+        self.view.setColumnWidth(10, 50)
         self.main_table.selectionModel().selectionChanged.connect(self.tableItemClicked)
 
     def printTable(self):
@@ -134,6 +135,7 @@ class Item_Mngmnt(QMainWindow):
         status_index = self.model.index(selected_item.row(),4)
         borrower_index = self.model.index(selected_item.row(),5)
         donor_index = self.model.index(selected_item.row(),6)
+        owner_index = self.model.index(selected_item.row(),7)
 
         selected_itemname = self.model.data(itemname_index)
         selected_quality = self.model.data(quality_index)
@@ -142,10 +144,11 @@ class Item_Mngmnt(QMainWindow):
         selected_status = self.model.data(status_index)
         selected_borrower = self.model.data(borrower_index)
         selected_donor = self.model.data(donor_index)
+        selected_owner = self.model.data(owner_index)
 
         if selected_item_data == "Edit":
 
-            creds = [selected_itemname, selected_quality, selected_barcode, selected_date, selected_status, selected_borrower, selected_donor]
+            creds = [selected_itemname, selected_quality, selected_barcode, selected_date, selected_status, selected_borrower, selected_donor, selected_owner]
 
             
             self.edit_item_window.editItem(creds)
@@ -205,6 +208,7 @@ class Item_Mngmnt(QMainWindow):
             import os
             from barcode import codex
             from barcode.writer import ImageWriter
+            from PIL import Image, ImageFont, ImageDraw
 
             if not os.path.exists('Barcodes'):
                 os.makedirs('Barcodes')
@@ -215,7 +219,24 @@ class Item_Mngmnt(QMainWindow):
                 Code128 = codex.Code128(selected_barcode, writer=ImageWriter())
 
                 Code128.save(filepath, options={'write_text':False})
+                img = Image.open(filepath+".png")
+                
+                try:
+                    font = ImageFont.truetype("arial.ttf", 40)
+                except IOError:
+                    font = ImageFont.load_default()
 
+                width, height = img.size
+                new_height = height+100
+
+                new_img = Image.new('RGB', (width, new_height), 'white')
+                new_img.paste(img, (0,50))
+
+                draw = ImageDraw.Draw(new_img)
+                draw.text((150, 250), selected_barcode ,(0,0,0), font=font)
+                draw.text((150, 0), selected_itemname ,(0,0,0), font=font)
+                new_img.save(filepath+".png")
+                
                 from printbarcode import PrintBarcode
 
                 self.printBarcode = PrintBarcode()
@@ -259,7 +280,7 @@ class Item_Mngmnt(QMainWindow):
             status = 2
 
         try:
-            cursor.execute(f"SELECT * FROM lnhsis.items WHERE item_name LIKE '%{tbsearched}%' OR quality LIKE '%{tbsearched}%' OR barcode LIKE '%{tbsearched}%' OR status = {status} OR donor LIKE '%{tbsearched}%'")
+            cursor.execute(f"SELECT * FROM lnhsis.items WHERE item_name LIKE '%{tbsearched}%' OR quality LIKE '%{tbsearched}%' OR barcode LIKE '%{tbsearched}%' OR status = {status} OR donor LIKE '%{tbsearched}%' OR owner LIKE '%{tbsearched}%'")
         except mysql.connector.Error as err:
             print("Error:", err)
             connection.rollback()
@@ -295,7 +316,8 @@ class Item_Mngmnt(QMainWindow):
                 QStandardItem(str(row[4])),
                 QStandardItem(stat),
                 QStandardItem(name),
-                QStandardItem(row[5])
+                QStandardItem(row[6]),
+                QStandardItem(row[7])
             ]
             items.append(QStandardItem("Edit"))
             items.append(QStandardItem("Delete"))

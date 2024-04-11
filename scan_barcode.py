@@ -4,7 +4,6 @@ from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6 import uic
 import mysql.connector, datetime
 from warning_dialog import Warning
-# Assuming database.py and its Database class are correctly implemented
 from database import Database
 
 class CustomLineEdit(QLineEdit):
@@ -103,14 +102,23 @@ class Scanbarcode(QMainWindow):
                 self.warning.show()
                 self.barcode_box.setText('')
                 return
-            from input_borrower import BorrowerInfo
-            self.borrower_info_window = BorrowerInfo()
-            self.borrower_info_window.addBorrowerInfo(self.barcode_box.text())
-            self.barcode_box.setText("")
-            self.borrower_info_window.show()
+            try:
+                from termcond import TermsAndCondition
+                self.terms_condition = TermsAndCondition()
+                self.terms_condition.show()
+            finally:
+                self.terms_condition.action.connect(self.addBorrower)
+                    
         else:
             self.warning.setWarning("No Items Found!")
             self.warning.show()
+
+    def addBorrower(self):
+        from input_borrower import BorrowerInfo
+        self.borrower_info_window = BorrowerInfo()
+        self.borrower_info_window.addBorrowerInfo(self.barcode_box.text())
+        self.barcode_box.setText("")
+        self.borrower_info_window.show()
 
 if __name__ == "__main__":
     app = QApplication([])

@@ -36,6 +36,7 @@ class AddItem(QMainWindow):
         self.datetime = self.findChild(QDateTimeEdit, "datetime_added")
         self.save_button = self.findChild(QPushButton, "save_button")
         self.donor_input = self.findChild(QLineEdit, "donor_input")
+        self.owner = self.findChild(QComboBox, "owner")
 
         self.unique_code = str(uuid.uuid4())
         current_datetime = datetime.datetime.now()
@@ -45,6 +46,12 @@ class AddItem(QMainWindow):
         self.quality.addItem("Good")
         self.quality.addItem("Bad")
         self.quality.addItem("Broken")
+        self.owner.addItem("BPP")
+        self.owner.addItem("COOKERY")
+        self.owner.addItem("CSS")
+        self.owner.addItem("EIM")
+        self.owner.addItem("EPASS")
+        self.owner.addItem("FBC")
         self.save_button.clicked.connect(self.saveData)
 
     def saveData(self):
@@ -63,7 +70,7 @@ class AddItem(QMainWindow):
         cursor = connection.cursor()
 
         try:
-            cursor.execute(f"INSERT INTO lnhsis.items (item_name, quality, barcode, date_added, status, donor) VALUES ('{self.item_name.text()}', '{self.quality.currentText()}', '{self.barcode.text()}', '{self.datetime.text()}', 0, '{donor}')")
+            cursor.execute(f"INSERT INTO lnhsis.items (item_name, quality, barcode, date_added, status, donor, owner) VALUES ('{self.item_name.text()}', '{self.quality.currentText()}', '{self.barcode.text()}', '{self.datetime.text()}', 0, '{donor}', '{self.owner.currentText()}')")
         except mysql.connector.Error as err:
             print("Error: ", err)
 
@@ -94,6 +101,7 @@ class AddItem(QMainWindow):
             import os
             from barcode import codex
             from barcode.writer import ImageWriter
+            from PIL import Image, ImageFont, ImageDraw
 
             if not os.path.exists('Barcodes'):
                 os.makedirs('Barcodes')
@@ -106,6 +114,24 @@ class AddItem(QMainWindow):
 
             from printbarcode import PrintBarcode
             try:
+                img = Image.open(filepath+".png")
+                
+                try:
+                    font = ImageFont.truetype("arial.ttf", 40)
+                except IOError:
+                    font = ImageFont.load_default()
+
+                width, height = img.size
+                new_height = height+100
+
+                new_img = Image.new('RGB', (width, new_height), 'white')
+                new_img.paste(img, (0,50))
+
+                draw = ImageDraw.Draw(new_img)
+                draw.text((150, 250), self.barcode.text() ,(0,0,0), font=font)
+                draw.text((150, 0), self.item_name.text() ,(0,0,0), font=font)
+                new_img.save(filepath+".png")
+
                 self.print_barcode = PrintBarcode()
 
                 self.print_barcode.print_document(filepath)
