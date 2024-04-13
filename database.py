@@ -3,12 +3,16 @@ import mysql.connector
 #db = Database(host='127.0.0.1',user='root',password='youkifubuki27*',database='LNHSIS')
 class Database:
     def __init__ (self):
-        self.host = '127.0.0.1'
-        self.user = 'root'
-        self.password = 'youkifubuki27*'
+        from configparser import ConfigParser
+
+        config = ConfigParser()
+
+        config.read("Database/config.ini")
+
+        self.host = config['Database']['server']
+        self.user = config['Database']['username']
+        self.password = config['Database']['password']
         self.database = 'lnhsis'
-
-
 
     def connect(self):
         try:
