@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>LNHS Inventory System</string>
+   <string>MNHS Inventory System</string>
   </property>
   <property name="styleSheet">
    <string notr="true">background-color:white;</string>
@@ -160,7 +160,7 @@ border: #4A90E2;</string>
      <string/>
     </property>
     <property name="pixmap">
-     <pixmap>../imgs/10367120_1535392513362694_7783233140674644301_n.jpg</pixmap>
+     <pixmap>../imgs/243439400_228124142686071_3437130401722642175_n.jpg</pixmap>
     </property>
     <property name="scaledContents">
      <bool>true</bool>
