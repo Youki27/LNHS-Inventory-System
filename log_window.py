@@ -23,12 +23,16 @@ class ViewLogs(QMainWindow):
         self.search_bar = self.findChild(QLineEdit, "search_bar")
         self.search_button = self.findChild(QPushButton, "search_button")
         self.print_table = self.findChild(QPushButton, "print_table")
+        self.print_barcodes = self.findChild(QPushButton, "print_barcodes")
+        self.delete_items = self.findChild(QPushButton, "delete_items")
 
         self.return_button.clicked.connect(self.close)
         self.add_items_button.setVisible(False)
         self.refresh_button.clicked.connect(self.loadLogs)
         self.search_button.clicked.connect(self.loadSearchedItem)
         self.print_table.clicked.connect(self.printTable)
+        self.print_barcodes.setVisible(False)
+        self.delete_items.setVisible(False)
 
         self.loadLogs()
 

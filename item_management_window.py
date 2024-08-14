@@ -1,7 +1,7 @@
 from PyQt6.QtGui import QCloseEvent, QFocusEvent, QStandardItem, QStandardItemModel
 from PyQt6.QtWidgets import QPushButton, QMainWindow, QApplication, QLineEdit,QTableView, QHeaderView, QDialog
 from PyQt6 import uic
-from PyQt6.QtCore import pyqtSignal, QModelIndex
+from PyQt6.QtCore import pyqtSignal, QModelIndex, Qt
 from add_item import AddItem
 from edit_item import EditItems
 from database import Database
@@ -24,6 +24,8 @@ class Item_Mngmnt(QMainWindow):
         self.search_bar = self.findChild(QLineEdit, "search_bar")
         self.search_button = self.findChild(QPushButton, "search_button")
         self.print_table = self.findChild(QPushButton, "print_table")
+        self.print_barcodes = self.findChild(QPushButton, "print_barcodes")
+        self.delete_items = self.findChild(QPushButton, "delete_items")
 
         self.return_button.clicked.connect(self.close)
         self.add_items_button.clicked.connect(self.addItem)
@@ -31,6 +33,8 @@ class Item_Mngmnt(QMainWindow):
         self.search_button.clicked.connect(self.loadSearchedItem)
         self.datetime = datetime.datetime.now()
         self.print_table.clicked.connect(self.printTable)
+        self.print_barcodes.clicked.connect(self.printBarcodes)
+        self.delete_items.clicked.connect(self.deleteItems)
 
         
         self.add_item_window = AddItem()
@@ -61,7 +65,7 @@ class Item_Mngmnt(QMainWindow):
         results = cursor.fetchall()
         connection.close()
         self.model = QStandardItemModel(0,6)
-        self.model.setHorizontalHeaderLabels(['Item','Quality','Barcode', 'Date Added','Status','Borrower','Donor','Owner','','',''])
+        self.model.setHorizontalHeaderLabels(['Item','Quality','Barcode', 'Date Added','Status','Borrower','Donor','Owner','Edit', ''])
 
         items = []
         for row in results:
@@ -80,6 +84,8 @@ class Item_Mngmnt(QMainWindow):
                 connection.close()
                 name = borrower[0]
 
+            
+
             items = [
                 QStandardItem(row[0]),
                 QStandardItem(row[1]),
@@ -91,8 +97,9 @@ class Item_Mngmnt(QMainWindow):
                 QStandardItem(row[6])
             ]
             items.append(QStandardItem("Edit"))
-            items.append(QStandardItem("Delete"))
-            items.append(QStandardItem("Print"))
+            checkbox = QStandardItem()
+            checkbox.setCheckable(True)
+            items.append(checkbox)
             self.model.appendRow(items)
 
         self.view = self.main_table
@@ -106,7 +113,6 @@ class Item_Mngmnt(QMainWindow):
         self.view.setColumnWidth(7, 50)
         self.view.setColumnWidth(8, 50)
         self.view.setColumnWidth(9, 50)
-        self.view.setColumnWidth(10, 50)
         self.main_table.selectionModel().selectionChanged.connect(self.tableItemClicked)
 
     def printTable(self):
@@ -115,6 +121,151 @@ class Item_Mngmnt(QMainWindow):
 
         self.print_ = PrintTable()
         self.print_.print_document(self.view)
+
+    def findCheckedItems(self):
+
+        checked_items = []
+
+        for row in range(self.model.rowCount()):
+
+            item = self.model.item(row, 9)
+            item_name_index = self.model.index(row, 0)
+            item_barcode_index = self.model.index(row, 2)
+
+            if item.checkState() == Qt.CheckState.Checked:
+                checked_items.append([self.model.data(item_name_index),self.model.data(item_barcode_index)])
+        
+        if checked_items:
+            return checked_items
+        
+        from warning_dialog import Warning
+
+        self.warning = Warning()
+        self.warning.setWarning("Please select atleast ONE Item")
+        self.warning.exec()
+
+
+    def printBarcodes(self):
+
+        barcodes = self.findCheckedItems()
+            
+        if not barcodes:
+            return
+
+        import os
+        from barcode import codex
+        from barcode.writer import ImageWriter
+        from PIL import Image, ImageFont, ImageDraw
+
+        if not os.path.exists('Barcodes'):
+            os.makedirs('Barcodes')
+
+            #make the file paths
+        filepaths = []
+        img_width = 0
+        img_height = 0
+
+        for item in barcodes:
+            
+            filepath = f'Barcodes/{item[0]}_{item[1]}'
+            filepaths.append(filepath)
+
+            selected_barcode = item[1]
+            selected_itemname = item[0]
+
+            Code128 = codex.Code128(selected_barcode, writer=ImageWriter())
+
+            Code128.save(filepath, options={'write_text':False})
+            img = Image.open(filepath+".png")
+                    
+            try:
+                font = ImageFont.truetype("arial.ttf", 40)
+            except IOError:
+                font = ImageFont.load_default()
+
+            width, height = img.size
+            new_height = height+100
+            img_width = width
+            img_height = height
+
+            new_img = Image.new('RGB', (width, new_height), 'white')
+            new_img.paste(img, (0,50))
+
+            draw = ImageDraw.Draw(new_img)
+            draw.text((150, 250), selected_barcode ,(0,0,0), font=font)
+            draw.text((150, 0), selected_itemname ,(0,0,0), font=font)
+            new_img.save(filepath+".png")
+            #print
+
+        from docx import Document
+        from docx.shared import Cm
+        
+        document = Document()
+
+        for item in filepaths:
+            document.add_picture(item+".png", width=Cm(8))
+
+        document.save('Barcodes/temp.docx')
+
+        from printbarcodes import PrintBarcode
+
+        self.printBarcode = PrintBarcode()
+        self.printBarcode.print_document(filepaths)
+
+    def deleteItems(self):
+
+        barcodes = self.findCheckedItems()
+
+        for item in barcodes:
+
+            from warning_dialog import Warning
+
+            self.warning = Warning()
+
+            selected_itemname = item[0]
+            selected_barcode = item[1]
+
+            self.warning.setWarning(f"Delete {selected_itemname} and their data?")
+
+            res = self.warning.exec()
+
+            if res == QDialog.DialogCode.Accepted:
+                db = Database()
+
+                connection = db.connect()
+                cursor = connection.cursor()
+
+                try:
+                    cursor.execute(f"SELECT item_id FROM lnhsis.items WHERE barcode = '{selected_barcode}'")
+                except mysql.connector.Error as err:
+                    print("Error 1: ", err)
+
+                result = cursor.fetchall()
+
+
+                for item in result:
+                    try:
+                        cursor.execute(f"DELETE FROM lnhsis.items WHERE item_id = {item[0]}")
+                    except mysql.connector.Error as err:
+                        print("Error 2: ", err)
+                        connection.rollback()
+                    connection.commit()
+
+                try:
+                    action = f"Deleted the item {selected_itemname}"
+                    cursor.execute(f"INSERT INTO lnhsis.logs (user, action, log_date) VALUES ('{self.current_user[0]}', '{action}', '{self.datetime}')")
+                except mysql.connector.Error as err:
+                    print("Error:", err)
+                connection.commit()
+
+                db.close()
+                self.warning.setWarning(f"{selected_itemname} was Deleted Successfully")
+                self.warning.show()
+                self.loadItems()
+
+            else:
+                self.warning.setWarning("Deletion Cancelled!")
+                self.warning.show()
 
     def tableItemClicked(self, item:QModelIndex):
 
@@ -154,7 +305,7 @@ class Item_Mngmnt(QMainWindow):
             self.edit_item_window.editItem(creds)
             self.edit_item_window.show()
             
-        if selected_item_data == "Delete":
+        '''if selected_item_data == "Delete":
             
             from warning_dialog import Warning
 
@@ -242,7 +393,7 @@ class Item_Mngmnt(QMainWindow):
                 self.printBarcode = PrintBarcode()
                 self.printBarcode.print_document(filepath)
             finally:
-                os.remove(f"{filepath}.png")
+                os.remove(f"{filepath}.png")'''
 
     def resource_path(self,relative_path):
         base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
@@ -320,8 +471,9 @@ class Item_Mngmnt(QMainWindow):
                 QStandardItem(row[7])
             ]
             items.append(QStandardItem("Edit"))
-            items.append(QStandardItem("Delete"))
-            items.append(QStandardItem("Print"))
+            checkbox = QStandardItem()
+            checkbox.setCheckable(True)
+            items.append(checkbox)
             self.model.appendRow(items)
 
         self.view.setModel(self.model)
