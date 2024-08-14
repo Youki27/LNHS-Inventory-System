@@ -162,55 +162,48 @@ class Item_Mngmnt(QMainWindow):
 
             #make the file paths
         filepaths = []
-        img_width = 0
-        img_height = 0
 
-        for item in barcodes:
+        try:
+            for item in barcodes:
+                
+                filepath = f'Barcodes/{item[0]}_{item[1]}'
+                filepaths.append(filepath)
+
+                selected_barcode = item[1]
+                selected_itemname = item[0]
+
+                Code128 = codex.Code128(selected_barcode, writer=ImageWriter())
+
+                Code128.save(filepath, options={'write_text':False})
+                img = Image.open(filepath+".png")
+                        
+                try:
+                    font = ImageFont.truetype("arial.ttf", 40)
+                except IOError:
+                    font = ImageFont.load_default()
+
+                width, height = img.size
+                new_height = height+100
+                img_width = width
+                img_height = height
+
+                new_img = Image.new('RGB', (width, new_height), 'white')
+                new_img.paste(img, (0,50))
+
+                draw = ImageDraw.Draw(new_img)
+                draw.text((150, 250), selected_barcode ,(0,0,0), font=font)
+                draw.text((150, 0), selected_itemname ,(0,0,0), font=font)
+                new_img.save(filepath+".png")
+
+            from printbarcodes import PrintBarcode
+
+            self.printBarcode = PrintBarcode()
+            self.printBarcode.print_document(filepaths)
+
+        finally:
             
-            filepath = f'Barcodes/{item[0]}_{item[1]}'
-            filepaths.append(filepath)
-
-            selected_barcode = item[1]
-            selected_itemname = item[0]
-
-            Code128 = codex.Code128(selected_barcode, writer=ImageWriter())
-
-            Code128.save(filepath, options={'write_text':False})
-            img = Image.open(filepath+".png")
-                    
-            try:
-                font = ImageFont.truetype("arial.ttf", 40)
-            except IOError:
-                font = ImageFont.load_default()
-
-            width, height = img.size
-            new_height = height+100
-            img_width = width
-            img_height = height
-
-            new_img = Image.new('RGB', (width, new_height), 'white')
-            new_img.paste(img, (0,50))
-
-            draw = ImageDraw.Draw(new_img)
-            draw.text((150, 250), selected_barcode ,(0,0,0), font=font)
-            draw.text((150, 0), selected_itemname ,(0,0,0), font=font)
-            new_img.save(filepath+".png")
-            #print
-
-        from docx import Document
-        from docx.shared import Cm
-        
-        document = Document()
-
-        for item in filepaths:
-            document.add_picture(item+".png", width=Cm(8))
-
-        document.save('Barcodes/temp.docx')
-
-        from printbarcodes import PrintBarcode
-
-        self.printBarcode = PrintBarcode()
-        self.printBarcode.print_document(filepaths)
+            for items in filepaths:
+                os.remove(items+".png")
 
     def deleteItems(self):
 
